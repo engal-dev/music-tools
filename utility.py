@@ -9,15 +9,18 @@ IGNORE_TERMS = [
     r"\[2011 - Remaster\]",
     r"\(2009 Remaster\)",
     r"\(Remaster 2019\)",
+    r"\(Bonus Version\)",
     r"\(Full Moon Edition\)",
     r"\(Deluxe Edition Remastered\)",
     r"\(Deluxe Remastered Edition\)",
+    r"\(Special Super Deluxe Box\)",
     r"\(2011 Remastered Version\)",
     r"\(Deluxe Edition\)",
     r"\(Deluxe Version\)",
     r"\(Deluxe Album\)",
     r"\(Deluxe\)",
     r"\(Super Deluxe Edition\)",
+    r"\(20th Anniversary Remaster\)",
     r"\(30th Anniversary / Deluxe Edition\)",
     r"\(40th Anniversary Deluxe Edition\)",
     r"\(Remastered 1996\)",
@@ -30,6 +33,9 @@ IGNORE_TERMS = [
     r"- 2011 Remastered Version",
     r"- Remastered 1996",
     r"- Remastered 2019",
+    r"- EP",
+    r"or Death and All His Friends",
+    r"\(Prospekt's March Edition\)",
     r"\(Live\)"
 ]
 
@@ -37,6 +43,14 @@ IGNORE_TERMS = [
 def clean_string(input_string):
     """Remove terms to ignore, extra spaces and convert in lowercase."""
     input_string = input_string.strip().lower()
+
+    # Sostituzione di caratteri specifici
+    input_string = input_string.replace("’", "'")
+    input_string = input_string.replace("×", "x")
+    input_string = input_string.replace("·", "")
+    input_string = input_string.replace("Sansiro", "San siro")
+    input_string = input_string.replace("1980-1990", "1980 - 1990")
+    
     for term in IGNORE_TERMS:
         input_string = re.sub(term, "", input_string, flags=re.IGNORECASE)
     return input_string.strip()
