@@ -19,7 +19,7 @@ OUTPUT_DIR = "spotify-playlists"
 def get_all_tracks(sp, playlist_id):
     """Recupera tutte le tracce di una playlist."""
     tracks = []
-    results = sp.playlist_items(playlist_id, fields='items(track(id,name,artists(id,name),album(id,name),external_urls.spotify)),next')
+    results = sp.playlist_items(playlist_id)
     while results:
         for item in results['items']:
             track = item['track']
@@ -30,7 +30,7 @@ def get_all_tracks(sp, playlist_id):
                     'artists': [{'id': artist['id'], 'name': artist['name']} for artist in track['artists']],
                     'album-id': track['album']['id'],
                     'album': track['album']['name'],
-                    'url': track['external_urls']['spotify']
+                    'url': track.get('external_urls', {}).get('spotify', 'URL non disponibile')
                 })
         results = sp.next(results)
     return tracks
