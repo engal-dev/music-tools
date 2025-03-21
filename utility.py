@@ -16,6 +16,7 @@ IGNORE_TERMS = [
     r"\(Special Super Deluxe Box\)",
     r"\(2011 Remastered Version\)",
     r"\(Deluxe Edition\)",
+    r"\(2015 stereo mix\)",
     r"\(Deluxe Version\)",
     r"\(Deluxe Album\)",
     r"\(Deluxe\)",
@@ -30,10 +31,18 @@ IGNORE_TERMS = [
     r"- Remastered",
     r"- Live @ San Siro 2015",
     r"- Live",
+    r"- edit vrs",
     r"- 2011 Remastered Version",
+    r"- Remastered 2020 in 192 KHz",
     r"- Remastered 1996",
     r"- Remastered 2019",
+    r"- Remastered 2006",
+    r"- 20th Anniversary Remaster",
+    r"- Mono / Remastered",
     r"- EP",
+    r"EP",
+    r"E.P.",
+    r": Deluxe Edition",
     r"or Death and All His Friends",
     r"\(Prospekt's March Edition\)",
     r"\(Live\)"
@@ -42,18 +51,29 @@ IGNORE_TERMS = [
 
 def clean_string(input_string):
     """Remove terms to ignore, extra spaces and convert in lowercase."""
-    input_string = input_string.strip().lower()
 
     # Sostituzione di caratteri specifici
     input_string = input_string.replace("’", "'")
     input_string = input_string.replace("×", "x")
     input_string = input_string.replace("·", "")
+    input_string = input_string.replace("‐", "-")
+    input_string = input_string.replace("…", "...")
+    input_string = input_string.replace(" / ", "/")
+    input_string = input_string.replace("E'", "è")
     input_string = input_string.replace("Sansiro", "San siro")
-    input_string = input_string.replace("1980-1990", "1980 - 1990")
+    input_string = input_string.replace(" - ", "-")
+    input_string = input_string.replace("I RIO", "Rio")
+    
+    input_string = input_string.strip().lower()
     
     for term in IGNORE_TERMS:
         input_string = re.sub(term, "", input_string, flags=re.IGNORECASE)
     return input_string.strip()
+
+def album_title_match(input_string):
+    """Manual match for irregoular album title."""
+    input_string = input_string.replace("Greatest Hits Volume One - The Singles", "Greatest Hits, Volume One: The Singles")
+    return input_string
 
 ##############################
 ### READ FILE UTILS

@@ -24,6 +24,7 @@ def authenticate():
         "v": API_VERSION,
         "c": CLIENT_ID
     }
+    session.verify=True #SSL verification
     return session
 
 def generate_token(password):
@@ -47,7 +48,26 @@ def search_song(session, artist, album, title):
     matches = [
         song for song in results
         if utility.clean_string(song["artist"]) == artist and
-           utility.clean_string(song["album"]) == album and
+           utility.clean_string(utility.album_title_match(song["album"])) == album and
+           utility.clean_string(song["title"]) == title
+    ]
+    return matches
+
+def search_song_no_album(session, artist, title):
+    """Cerca esattamente un brano su Navidrome basato su artista e titolo."""
+    response = session.get(f"{NAVIDROME_URL}/search2.view", params={
+        "query": title,
+        "f": "json"
+    })
+    if response.status_code != 200:
+        print(f"❌ Errore nella ricerca per {title}: {response.text}")
+        return []
+
+    # Filtra i risultati cercando una corrispondenza esatta su artista, album e titolo
+    results = response.json().get("subsonic-response", {}).get("searchResult2", {}).get("song", [])
+    matches = [
+        song for song in results
+        if utility.clean_string(song["artist"]) == artist and
            utility.clean_string(song["title"]) == title
     ]
     return matches

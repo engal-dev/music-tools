@@ -26,13 +26,13 @@ def compare_songs(navidrome_songs, spotify_songs, verified_songs):
     for spotify_song in spotify_songs:
         # Salta i brani già verificati
         if is_verified(spotify_song, verified_songs):
-            print(f'Salto brano già verificato: {spotify_song["artists"][0]["name"]} - {spotify_song["album"]} - {spotify_song["name"]}')
+            #print(f'Salto brano già verificato: {spotify_song["artists"][0]["name"]} - {spotify_song["album"]} - {spotify_song["name"]}')
             continue
 
         # Pulizia dei termini da ignorare
         spotify_title = utility.clean_string(spotify_song["name"])
         spotify_artist = utility.clean_string(spotify_song["artists"][0]["name"])
-        spotify_album = utility.clean_string(spotify_song["album"])
+        spotify_album = utility.clean_string(utility.album_title_match(spotify_song["album"]))
 
         # Cerca il brano in Navidrome (con album incluso)
         match = next(
@@ -41,7 +41,7 @@ def compare_songs(navidrome_songs, spotify_songs, verified_songs):
                 for navidrome_song in navidrome_songs
                 if spotify_title == utility.clean_string(navidrome_song["title"])
                 and spotify_artist == utility.clean_string(navidrome_song["artist"])
-                and spotify_album == utility.clean_string(navidrome_song["album"])
+                and spotify_album == utility.clean_string(utility.album_title_match(navidrome_song["album"]))
             ),
             None,
         )
@@ -93,7 +93,9 @@ def save_readable_list(data, file_path, found=True, output_dir=None):
                     f"      Artista: {navidrome_track['artist']}\n"
                     f"      Album: {navidrome_track['album']}\n"
                     f"      Titolo: {navidrome_track['title']}\n"
-                    f"      Starred: {navidrome_track['starred']}\n\n"
+                    f"      Starred: {navidrome_track['starred']}\n"
+                    f"      ID: {navidrome_track['id']}\n"
+                    f"   CORRELATION: {spotify_track['id']},{navidrome_track['id']}\n\n"
                 )
             else:
                 f.write(
