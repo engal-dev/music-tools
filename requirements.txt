@@ -1,0 +1,6 @@
+pip install json
+pip install requests
+pip install spotipy
+pip install load_dotenv
+pip install python-Levenshtein
+pip install fuzzywuzzy

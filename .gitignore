@@ -1,0 +1,8 @@
+navidrome-playlists/
+spotify-playlists/
+logs/
+compare_report/
+compare_report*/
+__pycache__/
+.cache
+.env
