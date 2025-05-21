@@ -8,9 +8,9 @@ import sys
 import logging
 
 sys.path.append('../')
-sys.path.append('../common_utils')
+sys.path.append('../common_py_utils')
 
-from common_utils import string_utils
+from common_py_utils import string_utils
 
 logger = logging.getLogger(__name__)
 

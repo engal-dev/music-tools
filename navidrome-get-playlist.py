@@ -5,9 +5,9 @@ import time
 from datetime import datetime, timedelta
 
 sys.path.append('../')
-sys.path.append('../common_utils')
+sys.path.append('../common_py_utils')
 
-from common_utils import json_utils, log_utils
+from common_py_utils import json_utils, log_utils
 
 PLAYLIST_NAME = "Brani preferiti"
 logger = log_utils.setup_logging(os.path.basename(__file__))
