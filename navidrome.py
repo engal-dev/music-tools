@@ -6,6 +6,7 @@ import utility
 from dotenv import load_dotenv
 import sys
 import logging
+import user_inputs
 
 sys.path.append('../')
 sys.path.append('../common_py_utils')
@@ -54,55 +55,13 @@ def search_song(session, artist, album, title, consider_album=True, only_one_res
     #logger.debug(json.dumps(response.json(), indent=2))
 
     if response.status_code != 200:
-        logger.error(f"❌ Error searching for {title}: {response.text}")
+        logger.error(f"Error searching for {title}: {response.text}")
         return []
 
     # Filter results looking for an exact match on artist, album and title
     results = response.json().get("subsonic-response", {}).get("searchResult2", {}).get("song", [])
-    
-    # Inizializza variabili per tenere traccia della canzone con il punteggio più alto
-    highest_score = 0
-    best_matches = []
 
-    for song in results:
-        matched, score = utility.match_song(
-            title, artist, album,
-            song["title"], song["artist"], utility.album_title_match(song["album"]),
-            consider_album=consider_album, simple_match=False
-        )
-        
-        if matched:
-            if score > highest_score:
-                highest_score = score
-                best_matches = [song]
-            elif score == highest_score and not only_one_result:
-                best_matches.append(song)
-
-    # chiedi all'utente di scegliere
-    if permit_choice and len(best_matches) > 1:
-        print("\nSono state trovate più corrispondenze con lo stesso punteggio. Scegli il brano:")
-        logger.info("\nSono state trovate più corrispondenze con lo stesso punteggio. Scegli il brano:")
-        print(f"0. Skip")
-        logger.info(f"0. Skip")
-        for i, song in enumerate(best_matches, 1):
-            print(f"{i}. {song['title']} - {song['artist']} ({song['album']})")
-            logger.info(f"{i}. {song['title']} - {song['artist']} ({song['album']}) [{song['path']}]")
-        
-        while True:
-            try:
-                choice = int(input("\nInserisci il numero del brano da selezionare: "))
-                if 1 <= choice <= len(best_matches):
-                    logger.info(f"User choice: {choice}")
-                    return [best_matches[choice - 1]]
-                elif choice == 0:
-                    logger.info("User choice: Skipped")
-                    return []
-                else:
-                    print(f"Per favore inserisci un numero tra 1 e {len(best_matches)}")
-            except ValueError:
-                print("Per favore inserisci un numero valido")
-
-    return best_matches if best_matches else []
+    return utility.find_song(title, artist, album, results, "navidrome", only_first_result=False, permit_choice=True, consider_album=consider_album)
 
 def add_to_favorites(session, navidrome_songs):
     """Adds songs to favorites in Navidrome."""

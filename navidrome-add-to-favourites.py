@@ -11,7 +11,7 @@ sys.path.append('../common_py_utils')
 
 from common_py_utils import file_utils, json_utils, log_utils
 
-logger = log_utils.setup_logging(os.path.basename(__file__), logging.DEBUG)
+logger = log_utils.setup_logging(os.path.basename(__file__), logging.INFO)
 
 # File input
 REPORT_DIR = "compare_report"
@@ -62,7 +62,7 @@ def main(source_file_path, input_service):
     id = None
     for song in songs_to_add:
         if input_service=='spotify':
-            artists = song["artists"][0]["name"]
+            artists =[artist["name"] for artist in song["artists"]]
             album = utility.album_title_match(song["album"])
             title = song["name"]
         elif input_service=="navidrome":
@@ -76,33 +76,33 @@ def main(source_file_path, input_service):
         # Cerca il brano esatto su Navidrome
         if id:
             try:
-                matches = [navidrome.get_song_by_id(session, id)]
+                match = [navidrome.get_song_by_id(session, id)]
             except ValueError:
                 logger.info("Song not found by ID, trying searching...")
-                matches = navidrome.search_song(session, artists, album, title)
+                match = navidrome.search_song(session, artists, album, title)
         else:
-            matches = navidrome.search_song(session, artists, album, title)
+            match = navidrome.search_song(session, artists, album, title)
 
-        if matches:
-            logger.info(f"Trovati {len(matches)} brani per {title} - {artists} ({album}).")
-            navidrome.add_to_favorites(session, matches)
-            added_to_favorites_count += len(matches)
+        if match:
+            logger.info(f"Trovato brano per {title} - {artists} ({album}).")
+            navidrome.add_to_favorites(session, [match])
+            added_to_favorites_count += 1
             continue
 
-        # Seconda ricerca (senza album)
-        partial_matches = navidrome.search_song(session, artists, None, title, consider_album=False)
-
-        if partial_matches:
-            logger.info(f"Trovati {len(partial_matches)} POTENZIALI brani per {title} - {artists}.")
-            write_partial_matches(PARTIAL_MATCH_FILE, song, partial_matches, input_service, output_dir=REPORT_DIR)
-            partial_matches_count += len(partial_matches)
-        else:
-            logger.info(f"Nessun brano trovato per {title} - {artists} ({album}).")
+#        # Seconda ricerca (senza album)
+#        partial_matches = navidrome.search_song(session, artists, None, title, consider_album=False)
+#
+#        if partial_matches:
+#            logger.info(f"Trovati {len(partial_matches)} POTENZIALI brani per {title} - {artists}.")
+#            write_partial_matches(PARTIAL_MATCH_FILE, song, partial_matches, input_service, output_dir=REPORT_DIR)
+#            partial_matches_count += len(partial_matches)
+#        else:
+#            logger.info(f"Nessun brano trovato per {title} - {artists} ({album}).")
     
     # Riepilogo
     logger.info("\n--- Riepilogo ---")
     logger.info(f"Brani aggiunti ai preferiti: {added_to_favorites_count}")
-    logger.info(f"Partial match trovati: {partial_matches_count}")
+#    logger.info(f"Partial match trovati: {partial_matches_count}")
 
 if __name__ == "__main__":
     default_source_file = "compare_report/songs_not_found.json"
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     start_time = time.time()
     start_datetime = datetime.now()
     
-    logger.info(f"🚀 Ora inizio: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"🚀 Start time: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
 
     main(source_file_path, input_service)
 
@@ -129,5 +129,5 @@ if __name__ == "__main__":
     minutes = (duration.seconds % 3600) // 60
     seconds = duration.seconds % 60
     
-    logger.info(f"✅ Ora fine: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
-    logger.info(f"⏱️ Durata: {hours} ore, {minutes} minuti, {seconds} secondi")
+    logger.info(f"✅ End time: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"⏱️ Duration: {hours} hours, {minutes} minutes, {seconds} seconds")

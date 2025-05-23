@@ -5,3 +5,5 @@ compare_report/
 compare_report*/
 __pycache__/
 .cache
+backup/
+user-data/

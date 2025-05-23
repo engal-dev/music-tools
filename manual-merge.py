@@ -62,7 +62,7 @@ if __name__ == "__main__":
     start_time = time.time()
     start_datetime = datetime.now()
     
-    logger.info(f"🚀 Ora inizio: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"🚀 Start time: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
 
     main()
 
@@ -75,5 +75,5 @@ if __name__ == "__main__":
     minutes = (duration.seconds % 3600) // 60
     seconds = duration.seconds % 60
     
-    logger.info(f"✅ Ora fine: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
-    logger.info(f"⏱️ Durata: {hours} ore, {minutes} minuti, {seconds} secondi")
+    logger.info(f"✅ End time: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"⏱️ Duration: {hours} hours, {minutes} minutes, {seconds} seconds")

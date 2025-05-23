@@ -1,7 +1,7 @@
 import re
 import sys
 import logging
-import os
+import user_inputs
 
 sys.path.append('../')
 sys.path.append('../common_py_utils')
@@ -152,3 +152,49 @@ def match_song(title1, artistList1, album1, title2, artistList2, album2,
             title2, artistList2, album2, consider_album=consider_album)
     
     return matched, score
+
+def find_song(input_title, input_artist, input_album, song_list,
+              song_list_format="navidrome", only_first_result=False, permit_choice=True,
+              consider_album=True):
+    """
+    Find a song in a list of songs.
+    """
+
+    if only_first_result and permit_choice:
+        raise ValueError("Parameters 'only_first_result' and 'permit_choice' cannot both be True.") 
+
+    highest_score = 0
+    best_matches = []
+    
+    for song in song_list:
+        if (song_list_format=="spotify"):
+            title = song['name']
+            #TODO: add logic to handle multiple artists
+            #artist = [artist["name"] for artist in song["artists"]]
+            album = song['album']
+        elif (song_list_format=="navidrome"):
+            title = song['title']
+            artist = song['artist']
+            album = song['album']
+        
+        matched, score = match_song(
+            input_title, input_artist, input_album,
+            title, artist, album_title_match(album),
+            consider_album=consider_album, simple_match=False
+        )
+        
+        if matched:
+            if score > highest_score:
+                highest_score = score
+                best_matches = [song]
+            elif score == highest_score and not only_first_result:
+                best_matches.append(song)
+    
+    # Asks user to choose
+    if permit_choice and len(best_matches) > 1:
+        return user_inputs.choose_song(best_matches, input_title, input_artist, input_album)
+
+    if only_first_result and best_matches:
+        return best_matches[0]
+    
+    return best_matches[0] if len(best_matches) == 1 else best_matches if best_matches else []

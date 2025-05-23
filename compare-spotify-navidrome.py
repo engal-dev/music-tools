@@ -38,33 +38,19 @@ def compare_songs(navidrome_songs, spotify_songs, verified_songs, simple_match=T
     not_found = []
 
     for spotify_song in spotify_songs:
-        logger.info(f"Comparing: {spotify_song['name']} - {spotify_song['artists'][0]['name']} - {spotify_song['album']}")
         # Salta i brani già verificati
         if is_verified(spotify_song, verified_songs):
             #print(f'Salto brano già verificato: {spotify_song["artists"][0]["name"]} - {spotify_song["album"]} - {spotify_song["name"]}')
             continue
 
+        logger.info(f"Comparing: {spotify_song['name']} - {spotify_song['artists'][0]['name']} - {spotify_song['album']}")
+
         spotify_title = spotify_song["name"]
         spotify_artists = [artist["name"] for artist in spotify_song["artists"]]
         spotify_album = utility.album_title_match(spotify_song["album"])
 
-        # Cerca il brano in Navidrome (con album incluso)
-        match = None
-        for navidrome_song in navidrome_songs:
-            # Pulizia dei termini da ignorare
-            navidrome_title = navidrome_song["title"]
-            navidrome_artist = navidrome_song["artist"]
-            navidrome_album = utility.album_title_match(navidrome_song["album"])
-            
-            founded = utility.match_song(
-                    spotify_title, spotify_artists, spotify_album,
-                    navidrome_title, navidrome_artist, navidrome_album, simple_match=False)[0]
-            
-            #TODO: Aggiugnere logica multiMatch
-
-            if founded:
-                match = navidrome_song
-                break
+        # Search in Navidrome (including album)
+        match = utility.find_song(spotify_title, spotify_artists, spotify_album, navidrome_songs, "navidrome", only_first_result=False, permit_choice=True, consider_album=True)
 
         if match:
             logger.info("MATCHED!")
@@ -75,26 +61,11 @@ def compare_songs(navidrome_songs, spotify_songs, verified_songs, simple_match=T
             verified_songs.append(spotify_song)
             continue
 
-        # Seconda verifica (senza album)
+        # Second search (without album)
         logger.info("No match. Trying without album...")
 
-        partial_match = None
-        for navidrome_song in navidrome_songs:
-            # Pulizia dei termini da ignorare
-            navidrome_title = navidrome_song["title"]
-            navidrome_artist = navidrome_song["artist"]
-            
-            founded = utility.match_song(
-                    spotify_title, spotify_artists, spotify_album,
-                    navidrome_title, navidrome_artist, navidrome_album,
-                    consider_album=False, simple_match=False)[0]
-            
-            #TODO: Aggiugnere logica multiMatch
-            
-            if founded:
-                partial_match = navidrome_song
-                break
-
+        partial_match = utility.find_song(spotify_title, spotify_artists, spotify_album, navidrome_songs, "navidrome", only_first_result=False, permit_choice=True, consider_album=False)
+        
         if partial_match:
             logger.info("PARTIALLY MATCHED!")
             partially_matched.append({
@@ -171,15 +142,15 @@ def main():
     if verified_songs:
         json_utils.save_to_json_file(verified_songs, VERIFIED_FILE, REPORT_DIR) #No need to append because the file is read before.
 
-    logger.info(f"{len(found)} brani trovati. Salvati in {FOUND_FILE} e {FOUND_LOG_FILE}.")
-    logger.info(f"{len(partially_matched)} brani parzialmente corrispondenti. Salvati in {PART_MATCH_FILE} e {PART_MATCH_LOG_FILE}.")
-    logger.info(f"{len(not_found)} brani non trovati. Salvati in {NOT_FOUND_FILE} e {NOT_FOUND_LOG_FILE}.")
+    logger.info(f"{len(found)} songs found. Saved in {FOUND_FILE} e {FOUND_LOG_FILE}.")
+    logger.info(f"{len(partially_matched)} partial match songs. Saved in {PART_MATCH_FILE} e {PART_MATCH_LOG_FILE}.")
+    logger.info(f"{len(not_found)} songs not found. Saved in {NOT_FOUND_FILE} e {NOT_FOUND_LOG_FILE}.")
 
 if __name__ == "__main__":
     start_time = time.time()
     start_datetime = datetime.now()
     
-    logger.info(f"🚀 Ora inizio: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"🚀 Start time: {start_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
 
     main()
 
@@ -187,10 +158,9 @@ if __name__ == "__main__":
     end_datetime = datetime.now()
     duration = timedelta(seconds=int(end_time - start_time))
     
-    # Converti la durata in ore, minuti e secondi
     hours = duration.seconds // 3600
     minutes = (duration.seconds % 3600) // 60
     seconds = duration.seconds % 60
     
-    logger.info(f"✅ Ora fine: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
-    logger.info(f"⏱️ Durata: {hours} ore, {minutes} minuti, {seconds} secondi")
+    logger.info(f"✅ End time: {end_datetime.strftime('%Y-%m-%d %H:%M:%S')}")
+    logger.info(f"⏱️ Duration: {hours} hours, {minutes} minutes, {seconds} seconds")
