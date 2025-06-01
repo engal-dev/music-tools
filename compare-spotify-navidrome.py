@@ -29,8 +29,16 @@ VERIFIED_FILE = "verified_songs.json"
 
 def is_verified(song, verified_songs):
     """Controlla se il brano è già verificato."""
-    return any(song["id"] == verified["id"] for verified in verified_songs)
-
+    if "id" in song and song["id"]:
+        return any(song["id"] == verified["id"] for verified in verified_songs)
+    else:
+        return any(
+            song["name"] == verified["name"] and 
+            song["artists"]["name"] == verified["artist"]["name"] and 
+            song["album"] == verified["album"] 
+            for verified in verified_songs
+        )
+    
 def compare_songs(navidrome_songs, spotify_songs, verified_songs, simple_match=True):
     """Confronta i brani tra Navidrome e Spotify."""
     found = []

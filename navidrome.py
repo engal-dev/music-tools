@@ -185,3 +185,24 @@ def remove_from_favorites(session, id):
         logger.info(f"✅ Song removed from favorites: {id})")
     else:
         logger.error(f"❌ Error unstarring song: {id}")
+
+def get_starred(session):
+    """Retrieves all starred songs from Navidrome."""
+    response = session.get(f"{NAVIDROME_URL}/getStarred2.view", params={
+        "f": "json",
+    })
+
+    logger.debug(response.text)
+
+    if response.status_code != 200:
+        logger.error("API call error:")
+        response.raise_for_status()
+
+    logger.debug("API response getStarred2.view:")
+    logger.debug(json.dumps(response.json(), indent=2))
+
+    # Get starred songs
+    data = response.json()["subsonic-response"]
+    if "starred2" not in data:
+        raise ValueError("No 'starred2' field found in API response.")
+    return data["starred2"]["song"]

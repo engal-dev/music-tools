@@ -2,6 +2,7 @@ import navidrome
 import os
 import sys
 import time
+import argparse
 from datetime import datetime, timedelta
 
 sys.path.append('../')
@@ -9,7 +10,6 @@ sys.path.append('../common_py_utils')
 
 from common_py_utils import json_utils, log_utils
 
-PLAYLIST_NAME = "Brani preferiti"
 logger = log_utils.setup_logging(os.path.basename(__file__))
 
 def get_playlist_by_name(session, playlists, name):
@@ -19,14 +19,38 @@ def get_playlist_by_name(session, playlists, name):
             return playlist
     raise ValueError(f"Playlist '{name}' not found.")
 
+def show_all_playlists(session, playlists):
+    """Mostra tutte le playlist disponibili e le salva in file JSON separati."""
+    logger.info("Playlist disponibili:")
+    for playlist in playlists:
+        logger.info(f"- {playlist['name']} (ID: {playlist['id']})")
+        
+        # Ottieni e salva le canzoni per ogni playlist
+        try:
+            entries = navidrome.get_playlist_songs(session, playlist["id"])
+            logger.info(f"  ↳ {len(entries)} brani trovati")
+            json_utils.save_to_json_file(entries, playlist['name']+".json", "navidrome-playlists")
+        except Exception as e:
+            logger.error(f"  ↳ Errore nel recupero della playlist {playlist['name']}: {e}")
+
 def main():
+    # Configurazione degli argomenti da riga di comando
+    parser = argparse.ArgumentParser(description='Ottieni le canzoni da una playlist Navidrome')
+    parser.add_argument('--playlist', '-p', help='Nome della playlist da recuperare')
+    args = parser.parse_args()
+
     # Authentication
     session = navidrome.authenticate()
 
     try:
         # Get all playlists
         navidrome_playlists = navidrome.get_playlists(session)
-        requested_playlist = get_playlist_by_name(session, navidrome_playlists, PLAYLIST_NAME)
+        
+        if not args.playlist:
+            show_all_playlists(session, navidrome_playlists)
+            return
+
+        requested_playlist = get_playlist_by_name(session, navidrome_playlists, args.playlist)
         logger.info(f"Found playlist: {requested_playlist['name']} (ID: {requested_playlist['id']})")
 
         # Get playlist tracks
@@ -34,7 +58,7 @@ def main():
         logger.info(f"{len(entries)} tracks found in playlist.")
 
         # Save data to file
-        json_utils.save_to_json_file(entries, PLAYLIST_NAME+".json", "navidrome-playlists")
+        json_utils.save_to_json_file(entries, args.playlist+".json", "navidrome-playlists")
 
     except Exception as e:
         logger.error(f"Error: {e}")
