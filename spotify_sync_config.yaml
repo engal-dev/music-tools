@@ -1,0 +1,40 @@
+# Spotify Music Library Sync - Configuration File
+# Questo file contiene la configurazione predefinita per la sincronizzazione
+# I parametri CLI hanno priorità su questi valori
+
+# Modalità di funzionamento
+# Nota: music_dir è specificato come parametro CLI obbligatorio
+write_tags: true  # true per scrivere effettivamente i tag, false per simulazione
+audio_features: true  # true per recuperare danceability, energy, valence, etc.
+skip_synced: false  # true per saltare file già sincronizzati
+
+# Logging e debugging  
+log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+
+# Configurazioni API Spotify
+max_retries: 5  # Numero massimo tentativi per rate limit
+spotify_search_limit: 30  # Numero massimo risultati per ricerca
+
+# Performance e ottimizzazioni
+progress_report_interval: 100  # Mostra progresso ogni N file (solo per log)
+base_delay: 0.1  # Delay minimo tra chiamate API (secondi)
+
+# Configurazione Progress Bar
+progress_bar:
+  enabled: true
+  show_eta: true
+  show_rate: true  
+  show_stats: true
+  width: 40
+  update_interval: 0.5
+
+# Formati supportati
+supported_formats:
+  - ".mp3"
+  - ".flac" 
+  - ".m4a"
+  - ".ogg"
+  - ".opus"
+
+# Directory di output per report
+report_dir: "spotify_sync_report"
