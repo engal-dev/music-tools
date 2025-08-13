@@ -122,9 +122,9 @@ def match_song_weighed(title1, artistList1, album1, title2, artistList2, album2,
     matched = score >= threshold
 
     if matched:
-        logger.info(f"score:{score} [title_score:{title_score};artist_score:{artist_score};album_score:{album_score}]")
+        logger.info(f" score:{score} [title_score:{title_score};artist_score:{artist_score};album_score:{album_score}] [title:{title2};artistList:{artistList2};album:{album2}]")
     else:
-        logger.debug(f"score:{score} [title_score:{title_score};artist_score:{artist_score};album_score:{album_score}]")
+        logger.debug(f"score:{score} [title_score:{title_score};artist_score:{artist_score};album_score:{album_score}] [title:{title2};artistList:{artistList2};album:{album2}]")
 
     return matched, score
 
@@ -166,12 +166,17 @@ def find_song(input_title, input_artist, input_album, song_list,
     highest_score = 0
     best_matches = []
     
+    logger.info(f"Searching match for song: {input_title} - {input_artist} - {input_album}")
+
     for song in song_list:
         if (song_list_format=="spotify"):
             title = song['name']
-            #TODO: add logic to handle multiple artists
-            #artist = [artist["name"] for artist in song["artists"]]
+            artist = [artist["name"] for artist in song["artists"]]
             album = song['album']
+        elif (song_list_format=="spotify_ext"):
+            title = song['name']
+            artist = [artist["name"] for artist in song["artists"]]
+            album = song['album']['name']
         elif (song_list_format=="navidrome"):
             title = song['title']
             artist = song['artist']
@@ -192,9 +197,37 @@ def find_song(input_title, input_artist, input_album, song_list,
     
     # Asks user to choose
     if permit_choice and len(best_matches) > 1:
-        return user_inputs.choose_song(best_matches, input_title, input_artist, input_album)
+        # Se ci sono canzoni duplicate, scegli quella con available_markets più grande
+        if song_list_format == "spotify_ext":
+            # Raggruppa le canzoni per titolo, artista e album
+            grouped_matches = {}
+            for song in best_matches:
+                title = song['name']
+                artist = [artist["name"] for artist in song["artists"]]
+                album = song['album']['name']
+                
+                # Crea una chiave unica per titolo, artista e album
+                key = (title, tuple(sorted(artist)), album)
+                
+                if key not in grouped_matches:
+                    grouped_matches[key] = []
+                grouped_matches[key].append(song)
+            
+            if len(grouped_matches) > 1:
+                logger.info("User choice required")
+                return user_inputs.choose_song(best_matches, input_title, input_artist, input_album, song_list_format)
+
+            # Per ogni gruppo di canzoni duplicate, scegli quella con available_markets più grande
+            for key, songs in grouped_matches.items():
+                # Trova la canzone con available_markets più grande
+                logger.info("Selected song by larger available_markets")
+                return max(songs, key=lambda s: len(s.get('available_markets', [])))
+
+        logger.info("User choice required")
+        return user_inputs.choose_song(best_matches, input_title, input_artist, input_album, song_list_format)
 
     if only_first_result and best_matches:
+        logger.info("Selected first result")
         return best_matches[0]
     
     return best_matches[0] if len(best_matches) == 1 else best_matches if best_matches else []

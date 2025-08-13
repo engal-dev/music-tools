@@ -16,6 +16,7 @@ REPORT_DIR = "compare_report"
 # File input
 NAVIDROME_FILE = "navidrome-playlists/Brani preferiti.json"
 SPOTIFY_FILE = "spotify-playlists/Brani preferiti.json"
+#SPOTIFY_FILE = "spotify-playlists/amazon-cinzia.json"
 # File output
 FOUND_FILE = "songs_found.json"
 NOT_FOUND_FILE = "songs_not_found.json"
@@ -34,7 +35,7 @@ def is_verified(song, verified_songs):
     else:
         return any(
             song["name"] == verified["name"] and 
-            song["artists"]["name"] == verified["artist"]["name"] and 
+            song["artists"][0]["name"] == verified["artists"][0]["name"] and 
             song["album"] == verified["album"] 
             for verified in verified_songs
         )

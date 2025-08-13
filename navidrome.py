@@ -48,6 +48,7 @@ def search_song(session, artist, album, title, consider_album=True, only_one_res
     """Searches for an exact song match in Navidrome based on artist, album and title."""
     response = session.get(f"{NAVIDROME_URL}/search2.view", params={
         "query": string_utils.clean_string(title),
+        "songCount": 1000,
         "f": "json"
     })
     
@@ -206,3 +207,67 @@ def get_starred(session):
     if "starred2" not in data:
         raise ValueError("No 'starred2' field found in API response.")
     return data["starred2"]["song"]
+
+def get_all_songs(session):
+    """Retrieves all songs from Navidrome using search2 with pagination."""
+    all_songs = []
+    offset = 0
+    batch_size = 500
+    
+    logger.info("Recupero tutti i brani da Navidrome...")
+    
+    while True:
+        try:
+            response = session.get(f"{NAVIDROME_URL}/search2.view", params={
+                "query": "",  # Query vuota per ottenere tutti i brani
+                "songOffset": offset,
+                "songCount": batch_size,
+                "albumOffset": 0,
+                "albumCount": 0,
+                "artistOffset": 0,
+                "artistCount": 0,
+                "f": "json"
+            })
+            
+            if response.status_code != 200:
+                logger.error(f"Errore API search2: {response.text}")
+                break
+                
+            data = response.json().get("subsonic-response", {})
+            search_result = data.get("searchResult2", {})
+            songs = search_result.get("song", [])
+            
+            if not songs:
+                break  # Nessun altro brano da recuperare
+                
+            all_songs.extend(songs)
+            offset += batch_size
+            
+            # logger.debug(f"{songs}")
+            logger.debug(f"Recuperati {len(all_songs)} brani finora...")
+            
+            # Pausa per non sovraccaricare il server
+            import time
+            time.sleep(0.1)
+            
+        except Exception as e:
+            logger.error(f"Errore durante recupero brani: {e}")
+            break
+    
+    logger.info(f"Recuperati {len(all_songs)} brani totali da Navidrome")
+    return all_songs
+
+def set_song_rating(session, song_id, rating):
+    """Sets the rating for a song in Navidrome."""
+    response = session.get(f"{NAVIDROME_URL}/setRating.view", params={
+        "id": song_id,
+        "rating": rating,
+        "f": "json"
+    })
+    
+    if response.status_code == 200:
+        logger.debug(f"✅ Rating set successfully for song {song_id}: {rating} stars")
+        return True
+    else:
+        logger.error(f"❌ Error setting rating for song {song_id}: {response.text}")
+        return False

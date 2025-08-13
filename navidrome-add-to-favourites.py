@@ -11,7 +11,7 @@ sys.path.append('../common_py_utils')
 
 from common_py_utils import file_utils, json_utils, log_utils
 
-logger = log_utils.setup_logging(os.path.basename(__file__), logging.INFO)
+logger = log_utils.setup_logging(os.path.basename(__file__), logging.DEBUG)
 
 # File input
 REPORT_DIR = "compare_report"
@@ -88,6 +88,8 @@ def main(source_file_path, input_service):
             navidrome.add_to_favorites(session, [match])
             added_to_favorites_count += 1
             continue
+        else:
+            logger.info(f"Nessun brano trovato per {title} - {artists} ({album}).")
 
 #        # Seconda ricerca (senza album)
 #        partial_matches = navidrome.search_song(session, artists, None, title, consider_album=False)

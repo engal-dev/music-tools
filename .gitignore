@@ -7,3 +7,4 @@ __pycache__/
 .cache
 backup/
 user-data/
+spotify_sync_report/
