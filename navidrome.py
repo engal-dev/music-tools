@@ -271,3 +271,91 @@ def set_song_rating(session, song_id, rating):
     else:
         logger.error(f"❌ Error setting rating for song {song_id}: {response.text}")
         return False
+
+def create_playlist(session, name):
+    """Creates a new playlist in Navidrome."""
+    response = session.get(f"{NAVIDROME_URL}/createPlaylist.view", params={
+        "name": name,
+        "f": "json"
+    })
+    
+    if response.status_code == 200:
+        playlist_data = response.json().get("subsonic-response", {}).get("playlist", {})
+        playlist_id = playlist_data.get("id")
+        logger.info(f"✅ Playlist created successfully: {name} (ID: {playlist_id})")
+        return playlist_id
+    else:
+        logger.error(f"❌ Error creating playlist {name}: {response.text}")
+        return None
+
+def add_songs_to_playlist(session, playlist_id, song_ids):
+    """Adds songs to an existing playlist in Navidrome."""
+    if not song_ids:
+        logger.warning("No song IDs provided to add to playlist")
+        return False
+    
+    # Convert song_ids to list if it's a single ID
+    if isinstance(song_ids, str):
+        song_ids = [song_ids]
+    
+    params = {
+        "playlistId": playlist_id,
+        "f": "json"
+    }
+    
+    # Add each song ID as a separate parameter
+    for i, song_id in enumerate(song_ids):
+        params[f"songIdToAdd"] = song_id if i == 0 else params.get("songIdToAdd", []) + [song_id]
+    
+    # Handle multiple song IDs properly
+    if len(song_ids) == 1:
+        params["songIdToAdd"] = song_ids[0]
+    else:
+        # For multiple songs, we need to make multiple calls or use a different approach
+        # Let's make individual calls for each song to be safe
+        success_count = 0
+        for song_id in song_ids:
+            single_params = {
+                "playlistId": playlist_id,
+                "songIdToAdd": song_id,
+                "f": "json"
+            }
+            response = session.get(f"{NAVIDROME_URL}/updatePlaylist.view", params=single_params)
+            
+            if response.status_code == 200:
+                success_count += 1
+                logger.debug(f"✅ Song {song_id} added to playlist {playlist_id}")
+            else:
+                logger.error(f"❌ Error adding song {song_id} to playlist: {response.text}")
+        
+        logger.info(f"Added {success_count}/{len(song_ids)} songs to playlist {playlist_id}")
+        return success_count == len(song_ids)
+    
+    # Single song case
+    response = session.get(f"{NAVIDROME_URL}/updatePlaylist.view", params=params)
+    
+    if response.status_code == 200:
+        logger.info(f"✅ Song(s) added to playlist {playlist_id}")
+        return True
+    else:
+        logger.error(f"❌ Error adding songs to playlist: {response.text}")
+        return False
+
+def find_or_create_playlist(session, name):
+    """Finds an existing playlist by name or creates a new one."""
+    try:
+        playlists = get_playlists(session)
+        
+        # Look for existing playlist with the same name
+        for playlist in playlists:
+            if playlist.get("name") == name:
+                logger.info(f"Found existing playlist: {name} (ID: {playlist['id']})")
+                return playlist["id"]
+        
+        # Playlist doesn't exist, create it
+        logger.info(f"Playlist '{name}' not found, creating new one...")
+        return create_playlist(session, name)
+        
+    except Exception as e:
+        logger.error(f"Error finding/creating playlist {name}: {e}")
+        return None
