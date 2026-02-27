@@ -8,3 +8,4 @@ __pycache__/
 backup/
 user-data/
 spotify_sync_report/
+*album_cache.json
